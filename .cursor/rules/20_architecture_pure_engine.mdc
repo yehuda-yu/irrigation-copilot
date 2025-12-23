@@ -1,0 +1,13 @@
+# Pure Engine Architecture
+
+## Rule
+Domain layer (`app/domain/*`) must remain deterministic:
+- No network calls (no requests, no HTTP)
+- No filesystem I/O (except via dependency injection)
+- No LLM calls
+- Pure functions only: inputs → outputs
+
+## Enforcement
+- All I/O happens in `app/data/*` (adapters) or `app/storage/*` (cache)
+- Domain functions take data as parameters, return computed results
+- Changes must be small and scoped; ask before cross-cutting refactors

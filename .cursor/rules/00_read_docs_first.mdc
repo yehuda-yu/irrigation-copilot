@@ -1,0 +1,9 @@
+# Read Documentation First
+
+## Rule
+Always read `ai_docs/00_ARCHITECTURE.md` and `ai_docs/01_STATUS.md` before making code changes.
+
+## Enforcement
+- Understand the pure engine architecture before modifying domain layer
+- Check current phase and dependencies before adding new code
+- Review PROJECT_JOURNAL.md for context on past decisions

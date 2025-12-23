@@ -1,0 +1,12 @@
+# Python Quality Standards
+
+## Rules
+- Use type hints for all function signatures
+- Prefer Pydantic models for structured data
+- Follow PEP 8 style (enforced by ruff)
+- Keep functions focused and small
+- Add docstrings to public functions/classes
+
+## Enforcement
+- Run `ruff check` before committing
+- Use `ruff format` for consistent formatting
