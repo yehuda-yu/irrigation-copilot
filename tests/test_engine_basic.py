@@ -225,3 +225,47 @@ def test_compute_with_invalid_inputs():
             crop_name="tomato",
         )
         irrigation_engine.compute_plan(profile, forecast)
+
+
+def test_efficiency_zero_rejected_at_model_level():
+    """Test that efficiency=0.0 is rejected by Pydantic model validation."""
+    from pydantic import ValidationError
+
+    # efficiency=0.0 should be rejected (must be > 0.0)
+    with pytest.raises(ValidationError) as exc_info:
+        models.ProfileInput(
+            mode="farm",
+            lat=32.0,
+            lon=34.0,
+            area_m2=100.0,
+            crop_name="tomato",
+            efficiency=0.0,
+        )
+
+    # Verify the error is about efficiency constraint
+    errors = exc_info.value.errors()
+    assert any(
+        err["loc"] == ("efficiency",) and "greater than 0" in str(err["msg"]).lower()
+        for err in errors
+    )
+
+
+def test_efficiency_negative_rejected_at_model_level():
+    """Test that negative efficiency is rejected by Pydantic model validation."""
+    from pydantic import ValidationError
+
+    with pytest.raises(ValidationError) as exc_info:
+        models.ProfileInput(
+            mode="farm",
+            lat=32.0,
+            lon=34.0,
+            area_m2=100.0,
+            crop_name="tomato",
+            efficiency=-0.1,
+        )
+
+    errors = exc_info.value.errors()
+    assert any(
+        err["loc"] == ("efficiency",) and "greater than 0" in str(err["msg"]).lower()
+        for err in errors
+    )
