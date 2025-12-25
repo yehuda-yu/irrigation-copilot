@@ -11,8 +11,6 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from app.agents.strands_agent import build_agent
-
 
 def main():
     """Run agent CLI."""
@@ -25,4 +23,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

@@ -14,4 +14,3 @@ app = FastAPI(title="Irrigation Copilot API")
 async def health():
     """Health check endpoint."""
     return {"status": "ok"}
-

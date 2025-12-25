@@ -1,2 +1,1 @@
 """Irrigation Copilot application package."""
-

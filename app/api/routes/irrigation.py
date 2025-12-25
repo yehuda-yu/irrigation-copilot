@@ -23,4 +23,3 @@ async def get_forecast():
     """Get forecast summary for location."""
     # TODO: Implement
     pass
-

@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+app/__init__.py
+irrigation_copilot.egg-info/PKG-INFO
+irrigation_copilot.egg-info/SOURCES.txt
+irrigation_copilot.egg-info/dependency_links.txt
+irrigation_copilot.egg-info/requires.txt
+irrigation_copilot.egg-info/top_level.txt
+tests/test_cache.py
+tests/test_engine_basic.py
+tests/test_engine_units.py
+tests/test_geo_selection.py
+tests/test_kc_catalog.py
+tests/test_moag_network.py
+tests/test_moag_parser.py

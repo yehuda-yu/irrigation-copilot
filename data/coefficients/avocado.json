@@ -1,0 +1,20 @@
+{
+  "crop_name": "avocado",
+  "coefficients": {
+    "type": "stage",
+    "basis": "ET0 Penman-Monteith",
+    "kc_initial": 0.65,
+    "kc_mid": 0.95,
+    "kc_end": 0.75
+  },
+  "metadata": {
+    "source": {
+      "title": "FAO-56 Irrigation and Drainage Paper No. 56, Chapter 6, Table 12",
+      "url": "https://www.fao.org/4/x0490e/x0490e0b.htm",
+      "table": "Table 12",
+      "chapter": "Chapter 6"
+    },
+    "notes": "FAO-56 Kc values for avocado (tree crop). Based on ET0 Penman-Monteith reference.",
+    "last_updated": "2025-12-24"
+  }
+}

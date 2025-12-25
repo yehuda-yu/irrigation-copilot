@@ -1,0 +1,13 @@
+Metadata-Version: 2.4
+Name: irrigation-copilot
+Version: 0.1.0
+Summary: AI-native irrigation planning copilot
+Requires-Python: >=3.11
+Requires-Dist: fastapi>=0.104.0
+Requires-Dist: uvicorn[standard]>=0.24.0
+Requires-Dist: pydantic>=2.5.0
+Requires-Dist: pydantic-settings>=2.1.0
+Requires-Dist: requests>=2.31.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: ruff>=0.1.0; extra == "dev"

@@ -9,7 +9,6 @@ dependencies = [
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
     "requests>=2.31.0",
-    "pandas>=2.1.0",
 ]
 
 [project.optional-dependencies]
@@ -21,6 +20,9 @@ dev = [
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app"]
 
 [tool.ruff]
 line-length = 100
@@ -35,4 +37,8 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+markers = [
+    "network: marks tests as requiring network access (deselect with '-m \"not network\"')",
+]
+addopts = "-m \"not network\""
 
