@@ -1,0 +1,20 @@
+{
+  "crop_name": "fern",
+  "profile_type": "plant",
+  "coefficients": {
+    "type": "single",
+    "basis": "ET0 Penman-Monteith",
+    "kc_value": 0.8
+  },
+  "metadata": {
+    "source": {
+      "title": "MVP Estimate",
+      "url": "",
+      "table": null
+    },
+    "notes": "MVP estimate for ferns. Not based on scientific source. Values are rough approximations for initial testing.",
+    "last_updated": "2025-01-27",
+    "needs_research": true
+  }
+}
+

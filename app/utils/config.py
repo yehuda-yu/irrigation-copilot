@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
+        extra="ignore",  # Ignore extra env vars like OPENAI_API_KEY
     )
 
     # API settings
@@ -37,10 +38,26 @@ class Settings(BaseSettings):
     # Logging
     log_level: str = "INFO"
 
+    # Agent settings
+    irrigation_agent_model: str = "gpt-4o-mini"
+    enable_vision: bool = False
+
     @field_validator("offline_mode", mode="before")
     @classmethod
     def parse_offline_mode(cls, v: str | bool | int) -> bool:
         """Parse offline_mode from env var (supports 1/0, true/false, etc.)."""
+        if isinstance(v, bool):
+            return v
+        if isinstance(v, int):
+            return bool(v)
+        if isinstance(v, str):
+            return v.lower() in ("1", "true", "yes", "on")
+        return False
+
+    @field_validator("enable_vision", mode="before")
+    @classmethod
+    def parse_enable_vision(cls, v: str | bool | int) -> bool:
+        """Parse enable_vision from env var (supports 1/0, true/false, etc.)."""
         if isinstance(v, bool):
             return v
         if isinstance(v, int):

@@ -9,6 +9,10 @@ dependencies = [
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
     "requests>=2.31.0",
+    "strands-agents>=1.0.0",
+    "strands-agents-tools>=0.1.0",
+    "openai>=1.0.0",
+    "python-dotenv>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -38,7 +42,17 @@ python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 markers = [
-    "network: marks tests as requiring network access (deselect with '-m \"not network\"')",
+    "network: marks tests as requiring network access (external HTTP calls)",
+    "llm: marks tests as requiring LLM API access (token-costing, requires RUN_LLM_TESTS=1)",
 ]
-addopts = "-m \"not network\""
+# Default: skip network and llm tests. LLM tests also require RUN_LLM_TESTS=1 even if selected.
+addopts = "-m \"not network and not llm\""
+# Timeout for individual tests (requires pytest-timeout plugin if installed)
+# timeout = 60
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.14.10",
+]
 

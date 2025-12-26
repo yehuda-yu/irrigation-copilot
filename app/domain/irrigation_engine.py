@@ -96,9 +96,9 @@ def compute_plan(
 
         # Resolve Kc (plant profiles use simple lookup)
         profile_name = profile.plant_profile_name or ""
-        kc_source_info = None  # Plant profiles don't have source info yet
         try:
             kc = kc_catalog.get_plant_kc(profile_name)
+            kc_source_info = kc_catalog.get_plant_source_info(profile_name)
         except kc_catalog.UnknownCropError as e:
             warnings.append(
                 f"Unknown plant profile '{profile_name}': {str(e)}. "
@@ -169,7 +169,7 @@ def compute_plan(
     }
 
     # Get coefficient source info
-    if profile.mode == "farm" and kc_source_info:
+    if kc_source_info:
         coefficient_source_info = kc_source_info.to_dict()
     else:
         # Fallback if source info unavailable
@@ -197,7 +197,6 @@ def compute_plan(
         )
     else:  # plant mode
         ml_per_day = units.liters_to_ml(liters_per_day)
-        # For plant mode, use simple source info
         return models.IrrigationPlan(
             date=forecast.date,
             mode="plant",
@@ -207,11 +206,6 @@ def compute_plan(
             pulses_per_day=pulses_per_day,
             inputs_used=inputs_used,
             coefficient_value_used=kc,
-            coefficient_source={
-                "source_type": "plant_profile",
-                "source_title": "Plant Profile Catalog",
-                "source_url": "",
-                "table_reference": None,
-            },
+            coefficient_source=coefficient_source_info,
             warnings=warnings,
         )

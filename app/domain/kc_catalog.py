@@ -48,11 +48,14 @@ def _load_crop_coefficients() -> dict[str, dict[str, Any]]:
         try:
             with open(json_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                crop_name = data.get("crop_name", "").lower().strip()
-                if crop_name:
-                    catalog[crop_name] = data
-                else:
-                    logger.warning(f"JSON file {json_file} missing 'crop_name' field")
+                profile_type = data.get("profile_type", "").lower().strip()
+                # Only load crops (not plant profiles)
+                if profile_type != "plant":
+                    crop_name = data.get("crop_name", "").lower().strip()
+                    if crop_name:
+                        catalog[crop_name] = data
+                    else:
+                        logger.warning(f"JSON file {json_file} missing 'crop_name' field")
         except Exception as e:
             logger.error(f"Failed to load coefficient file {json_file}: {e}")
 
@@ -61,32 +64,45 @@ def _load_crop_coefficients() -> dict[str, dict[str, Any]]:
     return catalog
 
 
-def _load_plant_coefficients() -> dict[str, float]:
+def _load_plant_coefficients() -> dict[str, dict[str, Any]]:
     """
-    Load plant profile coefficients (fallback to simple defaults for MVP).
+    Load plant profile coefficients from JSON files in data/coefficients/.
 
     Returns:
-        Dictionary mapping plant profile names to Kc values
+        Dictionary mapping plant profile names to coefficient data structures
     """
     global _PLANT_CATALOG_CACHE
     if _PLANT_CATALOG_CACHE is not None:
         return _PLANT_CATALOG_CACHE
 
-    # For MVP, use simple defaults for plant profiles
-    catalog: dict[str, float] = {
-        "succulent": 0.2,
-        "leafy_houseplant": 0.6,
-        "herbs": 0.7,
-        "flowering_balcony": 0.8,
-        "small_tree": 0.5,
-        "generic_outdoor": 0.7,
-        "cactus": 0.15,
-        "fern": 0.8,
-        "tomato_plant": 0.9,
-        "pepper_plant": 0.85,
-    }
+    catalog: dict[str, dict[str, Any]] = {}
+
+    if not _COEFFICIENTS_DIR.exists():
+        logger.warning(
+            f"Coefficients directory not found: {_COEFFICIENTS_DIR}. "
+            "No plant profile coefficients available."
+        )
+        _PLANT_CATALOG_CACHE = catalog
+        return catalog
+
+    # Load all JSON files in coefficients directory
+    for json_file in _COEFFICIENTS_DIR.glob("*.json"):
+        try:
+            with open(json_file, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                profile_type = data.get("profile_type", "").lower().strip()
+                # Only load plant profiles (not crops)
+                if profile_type == "plant":
+                    crop_name = data.get("crop_name", "").lower().strip()
+                    if crop_name:
+                        catalog[crop_name] = data
+                    else:
+                        logger.warning(f"JSON file {json_file} missing 'crop_name' field")
+        except Exception as e:
+            logger.error(f"Failed to load coefficient file {json_file}: {e}")
 
     _PLANT_CATALOG_CACHE = catalog
+    logger.info(f"Loaded {len(catalog)} plant profile coefficient files")
     return catalog
 
 
@@ -211,6 +227,35 @@ def get_crop_source_info(crop_name: str) -> CoefficientSourceInfo | None:
     )
 
 
+def get_plant_source_info(profile_name: str) -> CoefficientSourceInfo | None:
+    """
+    Get source information for a plant profile.
+
+    Args:
+        profile_name: Plant profile name (case-insensitive)
+
+    Returns:
+        CoefficientSourceInfo or None if profile not found
+    """
+    profile_key = profile_name.lower().strip()
+    catalog = _load_plant_coefficients()
+    profile_data = catalog.get(profile_key)
+
+    if profile_data is None:
+        return None
+
+    metadata = profile_data.get("metadata", {})
+    source = metadata.get("source", {})
+
+    return CoefficientSourceInfo(
+        kc_value=0.0,  # Not used in source info
+        source_type="plant_profile",
+        source_title=source.get("title", "MVP Estimate"),
+        source_url=source.get("url", ""),
+        table_reference=source.get("table"),
+    )
+
+
 def get_plant_kc(profile_name: str) -> float:
     """
     Get Kc value for a plant profile.
@@ -223,18 +268,35 @@ def get_plant_kc(profile_name: str) -> float:
 
     Raises:
         UnknownCropError: If profile is not found in catalog (no silent defaults)
+        ValueError: If coefficient data is invalid
     """
     profile_key = profile_name.lower().strip()
     catalog = _load_plant_coefficients()
-    kc = catalog.get(profile_key)
+    profile_data = catalog.get(profile_key)
 
-    if kc is None:
+    if profile_data is None:
         raise UnknownCropError(
             f"Plant profile '{profile_name}' not found in catalog. "
             f"Available profiles: {', '.join(sorted(catalog.keys()))}"
         )
 
-    return float(kc)
+    coeff_data = profile_data.get("coefficients", {})
+    coeff_type = coeff_data.get("type", "single")
+
+    if coeff_type != "single":
+        raise ValueError(
+            f"Plant profile '{profile_name}' has unsupported coefficient type '{coeff_type}'. "
+            "Only single-value coefficients are supported for plant profiles."
+        )
+
+    kc_value = coeff_data.get("kc_value")
+    if kc_value is None:
+        raise ValueError(
+            f"Plant profile '{profile_name}' has no 'kc_value' field. "
+            f"Available fields: {list(coeff_data.keys())}"
+        )
+
+    return float(kc_value)
 
 
 def is_crop_known(crop_name: str) -> bool:

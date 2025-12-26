@@ -393,3 +393,80 @@
   - Comprehensive offline tests (56 tests passing)
 - **Status:** Phase 4 complete. Ready for Phase 5 (Strands Agent MVP).
 
+---
+
+## 2025-12-26
+
+### Phase 5: Strands Agent MVP Implementation (Fixed)
+
+- **Dependencies (corrected for real Strands SDK):**
+  - `strands-agents>=1.0.0` (imports as `strands`)
+  - `strands-agents-tools>=0.1.0` (imports as `strands_tools`)
+  - `openai>=1.0.0` (OpenAI API client)
+  - `python-dotenv>=1.0.0` for local .env loading
+  - Updated pytest markers: Added `llm` marker, default skip with `-m "not network and not llm"`
+
+- **Correct Imports (verified working):**
+  ```python
+  from strands import Agent, tool
+  from strands.models.openai import OpenAIModel
+  from strands_tools import calculator, current_time
+  ```
+
+- **Security & Configuration:**
+  - Created `.env.example` template with OPENAI_API_KEY, IRRIGATION_AGENT_MODEL, ENABLE_VISION
+  - Added `.env` to `.gitignore` (never commit secrets)
+  - Extended `app/utils/config.py`: Added `irrigation_agent_model` (default: gpt-4o-mini) and `enable_vision`
+  - Environment variable parsing for boolean flags (supports 1/0, true/false, yes/no, on/off)
+
+- **Agent Modules:**
+  - **app/agents/prompts.py**: System prompt enforcing:
+    - Always use tools for calculations (never guess evap/Kc/water amounts)
+    - Ask for missing required fields (lat/lon if city/address provided)
+    - Keep answers concise (2-6 lines)
+    - Include safety note: "Verify with agronomist. Consider soil type, drainage..."
+  - **app/agents/schemas.py**: Structured output models:
+    - `IrrigationAgentResult`: answer_text, plan, chosen_point, inputs_used, warnings, debug
+    - `ChosenPointInfo`: Selected forecast point metadata
+  - **app/agents/tools.py**: Strands @tool wrappers (return dicts, not Pydantic for tool compatibility):
+    - `tool_get_forecast_points(date_str)`: Fetches forecast data, returns list of dicts
+    - `tool_pick_nearest_point(user_lat, user_lon, points)`: Returns {forecast_point, distance_km}
+    - `tool_compute_irrigation(profile, forecast_point)`: Returns IrrigationPlan dict
+    - Error handling returns `{"error": "message"}` for graceful LLM consumption
+  - **app/agents/agent.py**: Agent builder:
+    - `build_agent()`: Creates Strands Agent with OpenAIModel
+    - Uses OpenAIModel with temperature=0.2 for deterministic outputs
+    - Registers built-in tools: current_time, calculator
+    - Registers custom irrigation tools
+    - Validates OPENAI_API_KEY presence (raises ValueError if missing)
+
+- **CLI Runner:**
+  - **scripts/run_agent.py**: Interactive agent CLI:
+    - Loads .env file using python-dotenv (only in entrypoint)
+    - Validates OPENAI_API_KEY (fails fast with friendly message, never prints key)
+    - Builds agent and runs interactive loop
+    - Uses `agent(prompt)` call pattern
+    - Extracts response from result.message.content
+    - Handles KeyboardInterrupt gracefully
+
+- **Testing:**
+  - **tests/test_agent_tools.py**: Offline tool tests (13 tests):
+    - Uses `pytest.importorskip("strands")` for graceful skip if SDK not available
+    - Tests tool_pick_nearest_point with valid/invalid inputs
+    - Tests tool_compute_irrigation for farm and plant modes
+    - Tests error handling (returns error dict, not exceptions)
+  - **tests/test_agent_factory.py**: Agent factory structure tests:
+    - `test_agent_build_requires_api_key`: Validates API key requirement
+    - `test_agent_module_structure`: Validates module has build_agent
+    - `test_tools_module_structure`: Validates tools module has expected functions
+  - **tests/test_agent_llm.py**: LLM integration tests (marked @pytest.mark.llm):
+    - `test_agent_builds_with_key`: Actual agent creation
+    - `test_agent_runs_minimal_prompt`: End-to-end test
+
+- **Quality Gates:**
+  - `uv run ruff check .` passes
+  - `uv run pytest -q` passes (69 passed, 2 pre-existing failures unrelated to agent)
+  - LLM tests gated (skip by default, require OPENAI_API_KEY)
+
+- **Status:** Phase 5 complete. Strands agent MVP working with correct SDK imports.
+

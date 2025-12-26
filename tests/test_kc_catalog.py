@@ -98,7 +98,7 @@ def test_spot_check_avocado_values():
 
 
 def test_coefficient_file_structure():
-    """Test that coefficient files have required FAO-only structure."""
+    """Test that coefficient files have required structure."""
     coeff_dir = Path(__file__).parent.parent / "data" / "coefficients"
     for json_file in coeff_dir.glob("*.json"):
         with open(json_file, "r", encoding="utf-8") as f:
@@ -109,13 +109,18 @@ def test_coefficient_file_structure():
         assert "coefficients" in data
         assert "metadata" in data
 
-        # Check coefficients structure (FAO-only)
+        # Check coefficients structure
         coeff = data["coefficients"]
-        assert coeff["type"] == "stage"
+        assert coeff["type"] in ["stage", "single"]
         assert coeff["basis"] == "ET0 Penman-Monteith"
-        assert "kc_initial" in coeff
-        assert "kc_mid" in coeff
-        assert "kc_end" in coeff
+
+        # Stage-based (crops) vs single-value (plant profiles)
+        if coeff["type"] == "stage":
+            assert "kc_initial" in coeff
+            assert "kc_mid" in coeff
+            assert "kc_end" in coeff
+        elif coeff["type"] == "single":
+            assert "kc_value" in coeff
 
         # Check metadata has source
         metadata = data["metadata"]
@@ -123,7 +128,10 @@ def test_coefficient_file_structure():
         source = metadata["source"]
         assert "title" in source
         assert "url" in source
-        assert "FAO-56" in source["title"] or "fao" in source["title"].lower()
+        # For crops, should reference FAO-56; for plant profiles, may be MVP Estimate
+        profile_type = data.get("profile_type", "")
+        if profile_type != "plant":
+            assert "FAO-56" in source["title"] or "fao" in source["title"].lower()
 
 
 def test_is_crop_known():

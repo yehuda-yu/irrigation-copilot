@@ -6,6 +6,9 @@ irrigation_copilot.egg-info/SOURCES.txt
 irrigation_copilot.egg-info/dependency_links.txt
 irrigation_copilot.egg-info/requires.txt
 irrigation_copilot.egg-info/top_level.txt
+tests/test_agent_factory.py
+tests/test_agent_llm.py
+tests/test_agent_tools.py
 tests/test_cache.py
 tests/test_engine_basic.py
 tests/test_engine_units.py

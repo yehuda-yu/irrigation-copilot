@@ -1,0 +1,20 @@
+{
+  "crop_name": "tomato_plant",
+  "profile_type": "plant",
+  "coefficients": {
+    "type": "single",
+    "basis": "ET0 Penman-Monteith",
+    "kc_value": 0.9
+  },
+  "metadata": {
+    "source": {
+      "title": "MVP Estimate",
+      "url": "",
+      "table": null
+    },
+    "notes": "MVP estimate for tomato plants (container/pot). Based on FAO-56 tomato Kc_mid (1.15) but adjusted downward for container growing. Not scientifically validated.",
+    "last_updated": "2025-01-27",
+    "needs_research": true
+  }
+}
+

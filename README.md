@@ -19,7 +19,8 @@ uvicorn app.api.main:app --reload
 ### Run Agent CLI
 
 ```bash
-python scripts/run_agent_cli.py
+# First, create .env file with OPENAI_API_KEY (see .env.example)
+uv run python scripts/run_agent.py
 ```
 
 ### Run Tests

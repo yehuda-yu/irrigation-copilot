@@ -3,7 +3,7 @@
 **Doc conventions:** This file reflects the current snapshot status only. For historical timeline and decisions, see `PROJECT_JOURNAL.md`.
 
 ## Current Phase
-Phase 4: Nearest point selection (geospatial matching) - Complete
+Phase 5: Strands Agent MVP - Complete
 
 ## Done
 - Project structure scaffolded with strict domain/data separation
@@ -48,9 +48,22 @@ Phase 4: Nearest point selection (geospatial matching) - Complete
     - `InvalidCoordinatesError` exception with rich diagnostics (total_points, skipped_count, skipped_points)
   - `get_selection_diagnostics()` helper for data quality assessment
   - Comprehensive offline tests (distance calculation, selection logic, near-tie scenarios, edge cases)
+- **Strands Agent MVP:**
+  - Agent orchestration (app/agents/agent.py): Builds Strands agent with OpenAIModel
+  - Custom tools (app/agents/tools.py): Strands @tool wrappers for forecast, point selection, computation
+  - System prompt (app/agents/prompts.py): Strict tool usage, concise answers, safety notes
+  - Result schemas (app/agents/schemas.py): IrrigationAgentResult with plan, chosen_point, warnings
+  - Built-in tools: current_time, calculator (from strands_tools)
+  - CLI runner (scripts/run_agent.py): Interactive loop with .env loading
+  - Configuration: Model selection (IRRIGATION_AGENT_MODEL, default gpt-4o-mini), temperature 0.2
+  - Security: API key via .env (never committed), .env.example template, .gitignore protection
+  - Offline tests: Tool wrappers tested with synthetic data (test_agent_tools.py, test_agent_factory.py)
+  - LLM integration test: Marked @pytest.mark.llm, skipped by default (test_agent_llm.py)
+  - Documentation: ai_docs/specs/agents.md with setup, usage, cost tips
+  - **Imports**: `from strands import Agent, tool`, `from strands.models.openai import OpenAIModel`
 
 ## Next
-- Phase 5: Strands Agent MVP (integrate engine with agent tools)
+- Phase 6: API integration (FastAPI endpoints for agent)
 
 ## Risks
 - MoAG API stability/availability
@@ -64,9 +77,14 @@ Phase 4: Nearest point selection (geospatial matching) - Complete
 - requests
 - pytest
 - ruff
-- strands (agent framework)
+- strands-agents (agent framework, imports as `strands`)
+- strands-agents-tools (built-in tools, imports as `strands_tools`)
+- openai (OpenAI API client)
+- python-dotenv (local .env loading)
 
 ## Configuration
 - **Cache:** Default path `.cache/forecast.sqlite` (configurable via `cache_db_path` setting or env)
 - **Offline mode:** Set `OFFLINE_MODE=1` env var or use `--offline` flag in scripts
 - **MoAG API:** Timeout, retries, and backoff configurable via settings (defaults: 30s timeout, 3 retries, 1.0s base backoff)
+- **Agent:** Model via `IRRIGATION_AGENT_MODEL` (default: gpt-4o-mini), vision via `ENABLE_VISION` (default: 0)
+- **Secrets:** OpenAI API key via `OPENAI_API_KEY` in `.env` file (never committed, see `.env.example`)

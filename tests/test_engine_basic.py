@@ -227,27 +227,31 @@ def test_compute_with_invalid_inputs():
         irrigation_engine.compute_plan(profile, forecast)
 
 
-def test_efficiency_zero_rejected_at_model_level():
-    """Test that efficiency=0.0 is rejected by Pydantic model validation."""
-    from pydantic import ValidationError
+def test_efficiency_zero_rejected_at_engine_level():
+    """Test that efficiency=0.0 is rejected by the engine (not Pydantic model).
 
-    # efficiency=0.0 should be rejected (must be > 0.0)
-    with pytest.raises(ValidationError) as exc_info:
-        models.ProfileInput(
-            mode="farm",
-            lat=32.0,
-            lon=34.0,
-            area_m2=100.0,
-            crop_name="tomato",
-            efficiency=0.0,
-        )
-
-    # Verify the error is about efficiency constraint
-    errors = exc_info.value.errors()
-    assert any(
-        err["loc"] == ("efficiency",) and "greater than 0" in str(err["msg"]).lower()
-        for err in errors
+    Note: Model uses ge=0.0 to allow 0.0, but engine requires efficiency > 0.
+    This catches the error at compute time with a clear ValueError.
+    """
+    # Model allows 0.0 (ge=0.0)
+    profile = models.ProfileInput(
+        mode="farm",
+        lat=32.0,
+        lon=34.0,
+        area_m2=100.0,
+        crop_name="tomato",
+        efficiency=0.0,
     )
+    forecast = models.ForecastPoint(
+        date=datetime.date(2025, 1, 15),
+        lat=32.0,
+        lon=34.0,
+        evap_mm=5.0,
+    )
+
+    # But engine rejects it
+    with pytest.raises(ValueError, match="Efficiency must be in"):
+        irrigation_engine.compute_plan(profile, forecast)
 
 
 def test_efficiency_negative_rejected_at_model_level():
@@ -264,8 +268,9 @@ def test_efficiency_negative_rejected_at_model_level():
             efficiency=-0.1,
         )
 
+    # Verify the error is about efficiency constraint (ge=0.0 rejects negative)
     errors = exc_info.value.errors()
     assert any(
-        err["loc"] == ("efficiency",) and "greater than 0" in str(err["msg"]).lower()
+        err["loc"] == ("efficiency",) and "greater than or equal" in str(err["msg"]).lower()
         for err in errors
     )
