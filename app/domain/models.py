@@ -78,6 +78,24 @@ class ForecastPoint(BaseModel):
     geographic_area: str | None = Field(None, description="Geographic area identifier")
 
 
+class ComputationInputs(BaseModel):
+    """Inputs used in computation."""
+
+    kc: float = Field(..., description="Crop coefficient used")
+    efficiency: float = Field(..., description="Irrigation efficiency used")
+    area_m2: float = Field(..., description="Computed area in m2")
+    evap_mm: float = Field(..., description="Daily evaporation in mm")
+
+
+class CoefficientSource(BaseModel):
+    """Source information for crop coefficient."""
+
+    source_type: str = Field(..., description="Source type (e.g., fao56_stage)")
+    source_title: str = Field(..., description="Title of the source")
+    source_url: str | None = Field(None, description="URL to the source")
+    table_reference: str | None = Field(None, description="Reference to a specific table")
+
+
 class IrrigationPlan(BaseModel):
     """Computed irrigation plan output."""
 
@@ -93,13 +111,13 @@ class IrrigationPlan(BaseModel):
 
     # Common outputs
     pulses_per_day: int = Field(..., description="Number of irrigation pulses per day")
-    inputs_used: dict[str, float | str] = Field(
+    inputs_used: ComputationInputs = Field(
         ..., description="Inputs used in computation (kc, efficiency, area_m2, evap_mm)"
     )
     coefficient_value_used: float = Field(
         ..., description="Kc coefficient value used in calculation"
     )
-    coefficient_source: dict[str, str | None] = Field(
+    coefficient_source: CoefficientSource = Field(
         ...,
         description=(
             "Source information: source_type (israeli_calendar_monthly, "

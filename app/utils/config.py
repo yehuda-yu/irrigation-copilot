@@ -39,8 +39,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     # Agent settings
-    irrigation_agent_model: str = "gpt-4o-mini"
+    irrigation_agent_provider: str = "gemini"
+    irrigation_agent_model: str = "gemini-2.5-flash"
     enable_vision: bool = False
+    run_llm_tests: bool = False
 
     @field_validator("offline_mode", mode="before")
     @classmethod
@@ -54,10 +56,10 @@ class Settings(BaseSettings):
             return v.lower() in ("1", "true", "yes", "on")
         return False
 
-    @field_validator("enable_vision", mode="before")
+    @field_validator("enable_vision", "run_llm_tests", mode="before")
     @classmethod
-    def parse_enable_vision(cls, v: str | bool | int) -> bool:
-        """Parse enable_vision from env var (supports 1/0, true/false, etc.)."""
+    def parse_bool_env(cls, v: str | bool | int) -> bool:
+        """Parse boolean from env var (supports 1/0, true/false, etc.)."""
         if isinstance(v, bool):
             return v
         if isinstance(v, int):

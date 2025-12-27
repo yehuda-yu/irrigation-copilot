@@ -5,7 +5,6 @@ Structured outputs from the agent for irrigation planning.
 """
 
 import datetime
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -35,7 +34,4 @@ class IrrigationAgentResult(BaseModel):
     chosen_point: ChosenPointInfo = Field(..., description="Selected forecast point information")
     inputs_used: ProfileInput = Field(..., description="User inputs used in computation")
     warnings: list[str] = Field(default_factory=list, description="Warnings and cautions")
-    debug: dict[str, Any] | None = Field(
-        None, description="Optional debug information (tool timings, etc.)"
-    )
 

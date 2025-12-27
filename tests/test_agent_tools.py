@@ -11,28 +11,33 @@ import pytest
 pytest.importorskip("strands")
 
 
-def test_tool_pick_nearest_point_valid():
+def test_tool_pick_nearest_point_valid(monkeypatch):
     """Test tool_pick_nearest_point with valid inputs."""
     from app.agents.tools import tool_pick_nearest_point
+    from app.domain.models import ForecastPoint
 
-    points = [
-        {
-            "date": "2025-01-15",
-            "lat": 32.0,
-            "lon": 34.0,
-            "evap_mm": 5.0,
-            "name": "Near Station",
-        },
-        {
-            "date": "2025-01-15",
-            "lat": 33.0,
-            "lon": 35.0,
-            "evap_mm": 6.0,
-            "name": "Far Station",
-        },
-    ]
+    # Mock get_forecast_points to return synthetic data
+    def mock_get_forecast_points(*args, **kwargs):
+        return [
+            ForecastPoint(
+                date="2025-01-15",
+                lat=32.0,
+                lon=34.0,
+                evap_mm=5.0,
+                name="Near Station",
+            ),
+            ForecastPoint(
+                date="2025-01-15",
+                lat=33.0,
+                lon=35.0,
+                evap_mm=6.0,
+                name="Far Station",
+            ),
+        ]
 
-    result = tool_pick_nearest_point(32.1, 34.1, points)
+    monkeypatch.setattr("app.agents.tools.get_forecast_points", mock_get_forecast_points)
+
+    result = tool_pick_nearest_point(32.1, 34.1, "2025-01-15")
 
     assert "forecast_point" in result
     assert "distance_km" in result
@@ -41,34 +46,42 @@ def test_tool_pick_nearest_point_valid():
     assert result["distance_km"] < 100  # Should be close
 
 
-def test_tool_pick_nearest_point_empty_list():
+def test_tool_pick_nearest_point_empty_list(monkeypatch):
     """Test tool_pick_nearest_point returns error with empty list."""
     from app.agents.tools import tool_pick_nearest_point
 
-    result = tool_pick_nearest_point(32.0, 34.0, [])
+    # Mock get_forecast_points to return empty list
+    monkeypatch.setattr("app.agents.tools.get_forecast_points", lambda *args, **kwargs: [])
+
+    result = tool_pick_nearest_point(32.0, 34.0, "2025-01-15")
     assert "error" in result
-    assert "empty" in result["error"]
+    assert "available" in result["error"]
 
 
-def test_tool_pick_nearest_point_invalid_coords():
+def test_tool_pick_nearest_point_invalid_coords(monkeypatch):
     """Test tool_pick_nearest_point returns error with invalid user coordinates."""
     from app.agents.tools import tool_pick_nearest_point
+    from app.domain.models import ForecastPoint
 
-    points = [
-        {
-            "date": "2025-01-15",
-            "lat": 32.0,
-            "lon": 34.0,
-            "evap_mm": 5.0,
-        }
-    ]
+    # Mock get_forecast_points
+    monkeypatch.setattr(
+        "app.agents.tools.get_forecast_points",
+        lambda *args, **kwargs: [
+            ForecastPoint(
+                date="2025-01-15",
+                lat=32.0,
+                lon=34.0,
+                evap_mm=5.0,
+            )
+        ],
+    )
 
     # Invalid latitude
-    result = tool_pick_nearest_point(100.0, 34.0, points)
+    result = tool_pick_nearest_point(100.0, 34.0, "2025-01-15")
     assert "error" in result
 
     # Invalid longitude
-    result = tool_pick_nearest_point(32.0, 200.0, points)
+    result = tool_pick_nearest_point(32.0, 200.0, "2025-01-15")
     assert "error" in result
 
 

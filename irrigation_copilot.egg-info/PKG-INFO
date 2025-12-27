@@ -8,9 +8,8 @@ Requires-Dist: uvicorn[standard]>=0.24.0
 Requires-Dist: pydantic>=2.5.0
 Requires-Dist: pydantic-settings>=2.1.0
 Requires-Dist: requests>=2.31.0
-Requires-Dist: strands-agents>=1.0.0
+Requires-Dist: strands-agents[gemini]>=1.0.0
 Requires-Dist: strands-agents-tools>=0.1.0
-Requires-Dist: openai>=1.0.0
 Requires-Dist: python-dotenv>=1.0.0
 Provides-Extra: dev
 Requires-Dist: pytest>=7.4.0; extra == "dev"

@@ -5,7 +5,6 @@ Command-line interface for running the irrigation copilot agent interactively.
 Loads .env file and runs agent in a conversational loop.
 """
 
-import json
 import os
 import sys
 from pathlib import Path
@@ -16,6 +15,7 @@ from dotenv import load_dotenv
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.agents.agent import build_agent
+from app.agents.schemas import IrrigationAgentResult
 
 
 def main():
@@ -29,19 +29,19 @@ def main():
         print("No .env file found. Using environment variables only.")
 
     # Check for API key (don't print it!)
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         print(
-            "\n[ERROR] OPENAI_API_KEY environment variable is required.\n"
+            "\n[ERROR] GOOGLE_API_KEY environment variable is required.\n"
             "Create a .env file in the project root with:\n"
-            "  OPENAI_API_KEY=your_key_here\n"
+            "  GOOGLE_API_KEY=your_key_here\n"
             "See .env.example for template.\n"
         )
         sys.exit(1)
 
     # Print config (never print API key!)
-    model = os.environ.get("IRRIGATION_AGENT_MODEL", "gpt-4o-mini")
-    print(f"Model: {model}")
+    model_id = os.environ.get("IRRIGATION_AGENT_MODEL", "gemini-2.5-flash")
+    print(f"Model: {model_id}")
 
     # Build agent
     try:
@@ -66,7 +66,11 @@ def main():
     while True:
         try:
             # Read user input
-            user_input = input("You: ").strip()
+            try:
+                user_input = input("You: ").strip()
+            except EOFError:
+                print("\nGoodbye!")
+                break
 
             if not user_input:
                 continue
@@ -75,46 +79,21 @@ def main():
                 print("\nGoodbye!")
                 break
 
-            # Run agent
+            # Run agent with structured output
             print("\n[Thinking...]\n")
-            result = agent(user_input)
+            result = agent.structured_output(IrrigationAgentResult, user_input)
 
-            # Get the response message
-            if hasattr(result, "message") and result.message:
-                content = result.message.get("content", [])
-                if content and isinstance(content, list):
-                    # Extract text from content blocks
-                    text_parts = []
-                    for block in content:
-                        if isinstance(block, dict) and block.get("type") == "text":
-                            text_parts.append(block.get("text", ""))
-                        elif isinstance(block, str):
-                            text_parts.append(block)
-                    answer_text = "\n".join(text_parts)
-                else:
-                    answer_text = str(content)
-            else:
-                answer_text = str(result)
-
-            # Print answer
-            print("Agent:", answer_text)
+            # Print answer (human text)
+            print("Agent Answer:")
+            print("-" * 20)
+            print(result.answer_text)
+            print("-" * 20)
             print()
 
-            # Try to parse any JSON in the response for structured output
-            if "{" in answer_text and "}" in answer_text:
-                try:
-                    start_idx = answer_text.find("{")
-                    end_idx = answer_text.rfind("}") + 1
-                    if start_idx >= 0 and end_idx > start_idx:
-                        json_str = answer_text[start_idx:end_idx]
-                        result_dict = json.loads(json_str)
-                        print("=" * 60)
-                        print("Parsed Structured Result:")
-                        print("=" * 60)
-                        print(json.dumps(result_dict, indent=2, default=str))
-                        print()
-                except (json.JSONDecodeError, Exception):
-                    pass
+            # Print structured JSON
+            print("Structured Result (JSON):")
+            print(result.model_dump_json(indent=2))
+            print()
 
         except KeyboardInterrupt:
             print("\n\nInterrupted. Goodbye!")

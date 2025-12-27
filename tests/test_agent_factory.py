@@ -13,18 +13,18 @@ pytest.importorskip("strands")
 
 
 def test_agent_build_requires_api_key():
-    """Test that build_agent raises error when OPENAI_API_KEY is missing."""
+    """Test that build_agent raises error when GOOGLE_API_KEY is missing."""
     from app.agents.agent import build_agent
 
     # Temporarily remove API key if present
-    original_key = os.environ.pop("OPENAI_API_KEY", None)
+    original_key = os.environ.pop("GOOGLE_API_KEY", None)
     try:
-        with pytest.raises(ValueError, match="OPENAI_API_KEY"):
+        with pytest.raises(ValueError, match="GOOGLE_API_KEY"):
             build_agent()
     finally:
         # Restore original key if it existed
         if original_key:
-            os.environ["OPENAI_API_KEY"] = original_key
+            os.environ["GOOGLE_API_KEY"] = original_key
 
 
 def test_agent_module_structure():

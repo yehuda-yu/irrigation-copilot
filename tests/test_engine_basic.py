@@ -37,17 +37,16 @@ def test_compute_farm_simple_case():
     assert plan.liters_per_day > 0
     assert plan.ml_per_day is None
     assert plan.pulses_per_day >= 1
-    assert "kc" in plan.inputs_used
-    assert "efficiency" in plan.inputs_used
-    assert "area_m2" in plan.inputs_used
-    assert "evap_mm" in plan.inputs_used
+    assert plan.inputs_used.kc > 0
+    assert plan.inputs_used.efficiency > 0
+    assert plan.inputs_used.area_m2 == 100.0
+    assert plan.inputs_used.evap_mm == 5.0
 
     # Check coefficient source info is included
     assert plan.coefficient_value_used > 0
-    assert "source_type" in plan.coefficient_source
-    assert "source_title" in plan.coefficient_source
-    assert "source_url" in plan.coefficient_source
-    assert plan.coefficient_source["source_type"] == "fao56_stage"
+    assert plan.coefficient_source.source_type == "fao56_stage"
+    assert plan.coefficient_source.source_title is not None
+    assert plan.coefficient_source.source_url is not None
 
 
 def test_efficiency_increases_required_liters():

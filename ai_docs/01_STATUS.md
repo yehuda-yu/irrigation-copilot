@@ -5,6 +5,18 @@
 ## Current Phase
 Phase 5: Strands Agent MVP - Complete
 
+## Phase 6: Gemini Integration & Optimization - Complete
+- Switched Strands agent from OpenAI to Google Gemini 2.5 Flash
+- **Performance Optimization**:
+  - Optimized `tool_get_forecast_points` to return summary only (save tokens/time)
+  - Optimized `tool_pick_nearest_point` to calculate distance in code (deterministic & fast)
+- **Schema Hardening**:
+  - Updated `IrrigationPlan` and `IrrigationAgentResult` to use strict Pydantic models (nested objects instead of dicts)
+  - Fixed `additionalProperties` incompatibility with Gemini Structured Output
+- Updated dependencies to `strands-agents[gemini]`
+- Updated CLI runner to handle structured output and EOF gracefully
+- Updated LLM tests to be token-safe and Gemini-compatible
+
 ## Done
 - Project structure scaffolded with strict domain/data separation
 - UV project setup configured with quality gates (ruff check, pytest)
@@ -49,21 +61,21 @@ Phase 5: Strands Agent MVP - Complete
   - `get_selection_diagnostics()` helper for data quality assessment
   - Comprehensive offline tests (distance calculation, selection logic, near-tie scenarios, edge cases)
 - **Strands Agent MVP:**
-  - Agent orchestration (app/agents/agent.py): Builds Strands agent with OpenAIModel
+  - Agent orchestration (app/agents/agent.py): Builds Strands agent with GeminiModel
   - Custom tools (app/agents/tools.py): Strands @tool wrappers for forecast, point selection, computation
   - System prompt (app/agents/prompts.py): Strict tool usage, concise answers, safety notes
   - Result schemas (app/agents/schemas.py): IrrigationAgentResult with plan, chosen_point, warnings
   - Built-in tools: current_time, calculator (from strands_tools)
-  - CLI runner (scripts/run_agent.py): Interactive loop with .env loading
-  - Configuration: Model selection (IRRIGATION_AGENT_MODEL, default gpt-4o-mini), temperature 0.2
+  - CLI runner (scripts/run_agent.py): Interactive loop with .env loading, uses structured output
+  - Configuration: Model selection (IRRIGATION_AGENT_MODEL, default gemini-2.5-flash), temperature 0.2
   - Security: API key via .env (never committed), .env.example template, .gitignore protection
   - Offline tests: Tool wrappers tested with synthetic data (test_agent_tools.py, test_agent_factory.py)
   - LLM integration test: Marked @pytest.mark.llm, skipped by default (test_agent_llm.py)
   - Documentation: ai_docs/specs/agents.md with setup, usage, cost tips
-  - **Imports**: `from strands import Agent, tool`, `from strands.models.openai import OpenAIModel`
+  - **Imports**: `from strands import Agent, tool`, `from strands.models.gemini import GeminiModel`
 
 ## Next
-- Phase 6: API integration (FastAPI endpoints for agent)
+- Phase 7: API integration (FastAPI endpoints for agent)
 
 ## Risks
 - MoAG API stability/availability
@@ -77,14 +89,13 @@ Phase 5: Strands Agent MVP - Complete
 - requests
 - pytest
 - ruff
-- strands-agents (agent framework, imports as `strands`)
+- strands-agents[gemini] (agent framework, imports as `strands`)
 - strands-agents-tools (built-in tools, imports as `strands_tools`)
-- openai (OpenAI API client)
 - python-dotenv (local .env loading)
 
 ## Configuration
 - **Cache:** Default path `.cache/forecast.sqlite` (configurable via `cache_db_path` setting or env)
 - **Offline mode:** Set `OFFLINE_MODE=1` env var or use `--offline` flag in scripts
 - **MoAG API:** Timeout, retries, and backoff configurable via settings (defaults: 30s timeout, 3 retries, 1.0s base backoff)
-- **Agent:** Model via `IRRIGATION_AGENT_MODEL` (default: gpt-4o-mini), vision via `ENABLE_VISION` (default: 0)
-- **Secrets:** OpenAI API key via `OPENAI_API_KEY` in `.env` file (never committed, see `.env.example`)
+- **Agent:** Model via `IRRIGATION_AGENT_MODEL` (default: gemini-2.5-flash), vision via `ENABLE_VISION` (default: 0)
+- **Secrets:** Google API key via `GOOGLE_API_KEY` in `.env` file (never committed, see `.env.example`)

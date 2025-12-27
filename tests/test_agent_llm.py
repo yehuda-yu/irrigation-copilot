@@ -31,7 +31,7 @@ def _handle_rate_limit(func):
             error_str = str(e).lower()
             # Check for rate limit indicators
             if "429" in error_str or "rate limit" in error_str or "throttle" in error_str:
-                pytest.skip("OpenAI rate limit (429) hit - skipping to avoid token waste")
+                pytest.skip("Google Gemini rate limit hit - skipping to avoid token waste")
             raise
 
     return wrapper
@@ -74,23 +74,28 @@ def test_agent_runs_minimal_prompt():
     # Check result exists
     assert result is not None
 
-    # Extract response text
+    # Extract response text using a more robust helper or method if available
+    # In Strands, result.message['content'] for Gemini might be a list of parts
+    response_text = ""
     if hasattr(result, "message") and result.message:
         content = result.message.get("content", [])
-        if content and isinstance(content, list):
-            text_parts = []
+        if isinstance(content, list):
             for block in content:
-                if isinstance(block, dict) and block.get("type") == "text":
-                    text_parts.append(block.get("text", ""))
+                if isinstance(block, dict):
+                    # Check for Strands/OpenAI style or Gemini style
+                    if block.get("type") == "text":
+                        response_text += block.get("text", "")
+                    elif "text" in block:
+                        response_text += block["text"]
                 elif isinstance(block, str):
-                    text_parts.append(block)
-            response_text = "\n".join(text_parts)
+                    response_text += block
         else:
             response_text = str(content)
     else:
         response_text = str(result)
 
     # The agent should return some text
+    # If empty, maybe the agent only returned tool calls?
     assert len(response_text) > 0
 
 
@@ -114,16 +119,18 @@ def test_agent_uses_calculator_tool():
     assert result is not None
 
     # Extract response
+    response_text = ""
     if hasattr(result, "message") and result.message:
         content = result.message.get("content", [])
-        if content and isinstance(content, list):
-            text_parts = []
+        if isinstance(content, list):
             for block in content:
-                if isinstance(block, dict) and block.get("type") == "text":
-                    text_parts.append(block.get("text", ""))
+                if isinstance(block, dict):
+                    if block.get("type") == "text":
+                        response_text += block.get("text", "")
+                    elif "text" in block:
+                        response_text += block["text"]
                 elif isinstance(block, str):
-                    text_parts.append(block)
-            response_text = "\n".join(text_parts)
+                    response_text += block
         else:
             response_text = str(content)
     else:
@@ -131,3 +138,29 @@ def test_agent_uses_calculator_tool():
 
     # Should contain the answer (105)
     assert "105" in response_text
+
+
+@pytest.mark.llm
+@_handle_rate_limit
+def test_agent_structured_output():
+    """
+    Test that agent can return structured output using Gemini.
+
+    Cost: Minimal (~500-1000 tokens).
+    """
+    from app.agents.agent import build_agent
+    from app.agents.schemas import IrrigationAgentResult
+
+    agent = build_agent()
+
+    # Prompt that includes all necessary info for a simple run
+    prompt = (
+        "lat=32.0 lon=34.8 Mode=plant plant_profile=herbs pot_diameter_cm=20 "
+        "Compute today's irrigation. Use tools."
+    )
+
+    result = agent.structured_output(IrrigationAgentResult, prompt)
+    assert isinstance(result, IrrigationAgentResult)
+    assert result.answer_text
+    assert result.plan is not None
+    assert result.chosen_point is not None

@@ -4,11 +4,12 @@
 
 The Irrigation Copilot uses a **Strands-based conversational agent** that orchestrates
 deterministic tools to provide irrigation recommendations. The agent enforces strict tool
-usage for all calculations and data retrieval.
+usage for all calculations and data retrieval. It uses **Google Gemini 2.5 Flash** as the
+underlying LLM.
 
 ## Architecture
 
-- **Agent Layer**: `app/agents/agent.py` - Builds Strands agent with OpenAI model
+- **Agent Layer**: `app/agents/agent.py` - Builds Strands agent with Gemini model
 - **Tools**: `app/agents/tools.py` - Strands `@tool` wrappers around domain/data functions
 - **Prompts**: `app/agents/prompts.py` - System prompt enforcing tool usage
 - **Schemas**: `app/agents/schemas.py` - Structured output models (IrrigationAgentResult)
@@ -17,18 +18,18 @@ usage for all calculations and data retrieval.
 
 ### 1. Create .env File
 
-Copy `.env.example` to `.env` and fill in your OpenAI API key:
+Copy `.env.example` to `.env` and fill in your Google API key (get one from [Google AI Studio](https://aistudio.google.com/)):
 
 ```bash
 cp .env.example .env
-# Edit .env and add your OPENAI_API_KEY
+# Edit .env and add your GOOGLE_API_KEY
 ```
 
 Example `.env`:
 
 ```
-OPENAI_API_KEY=sk-your-key-here
-IRRIGATION_AGENT_MODEL=gpt-4o-mini
+GOOGLE_API_KEY=your-key-here
+IRRIGATION_AGENT_MODEL=gemini-2.5-flash
 ENABLE_VISION=0
 OFFLINE_MODE=0
 ```
@@ -42,9 +43,8 @@ uv sync
 ```
 
 This installs:
-- `strands-agents` - The Strands agent framework
+- `strands-agents[gemini]` - The Strands agent framework with Gemini support
 - `strands-agents-tools` - Built-in tools (calculator, current_time)
-- `openai` - OpenAI API client
 - `python-dotenv` - Load .env files
 
 ### 3. Run Agent CLI
@@ -57,16 +57,22 @@ uv run python scripts/run_agent.py
 
 ### Interactive CLI
 
-The agent runs in an interactive loop:
+The agent runs in an interactive loop and returns structured results:
 
 ```
-You: I have a 5 dunam tomato farm at latitude 32.0, longitude 34.8.
-     What irrigation do I need today?
+You: lat=32.0853 lon=34.7818 Mode=plant plant_profile=herbs pot_diameter_cm=20 Compute today's irrigation. Use tools. Return structured JSON.
 
-Agent: Your 5 dunam tomato farm needs approximately 3,200 liters/day today.
-       Based on 5.8mm evaporation and mid-stage Kc of 1.15.
-       Consider splitting into 2 pulses. Verify with agronomist.
-       Consider soil type, drainage, and irrigation system efficiency.
+Agent Answer:
+--------------------
+Based on today's evaporation of 5.8mm and your herbs' profile, you should irrigate with 450ml today.
+--------------------
+
+Structured Result (JSON):
+{
+  "answer_text": "Based on today's evaporation of 5.8mm and your herbs' profile, you should irrigate with 450ml today.",
+  "plan": { ... },
+  ...
+}
 ```
 
 ### Expected Flow
@@ -75,7 +81,7 @@ Agent: Your 5 dunam tomato farm needs approximately 3,200 liters/day today.
 2. Agent calls `tool_get_forecast_points` to fetch evaporation data
 3. Agent calls `tool_pick_nearest_point` to select nearest forecast station
 4. Agent calls `tool_compute_irrigation` to calculate water needs
-5. Agent returns a short text answer (2-6 lines)
+5. Agent returns a structured `IrrigationAgentResult` including a short text answer and a full plan.
 
 ## Tools
 
@@ -99,25 +105,24 @@ tools - it cannot guess or calculate numbers on its own.
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `OPENAI_API_KEY` | Yes | - | OpenAI API key |
-| `IRRIGATION_AGENT_MODEL` | No | `gpt-4o-mini` | Model to use |
+| `GOOGLE_API_KEY` | Yes | - | Google Gemini API key |
+| `IRRIGATION_AGENT_MODEL` | No | `gemini-2.5-flash` | Model to use |
 | `ENABLE_VISION` | No | `0` | Enable image reading tool |
 | `OFFLINE_MODE` | No | `0` | Use cache only, no forecast API calls |
+| `RUN_LLM_TESTS` | No | `0` | Set to 1 to enable LLM tests |
 
 ### Model Selection
 
-**Recommended**: `gpt-4o-mini` (default)
+**Recommended**: `gemini-2.5-flash` (default)
 
-- Cost-effective (~$0.15 per 1M input tokens)
+- Highly cost-effective
 - Fast responses
-- Good tool-calling support
-- Sufficient for irrigation queries
-
-**Alternative**: `gpt-4o` for complex scenarios requiring more reasoning.
+- Strong tool-calling and structured output support
+- Large context window
 
 ## Cost Optimization
 
-1. **Use gpt-4o-mini** - Default, sufficient for most queries
+1. **Use gemini-2.5-flash** - Default, sufficient for most queries
 2. **Keep answers short** - System prompt enforces 2-6 line answers
 3. **Cache forecasts** - Use offline mode after initial fetch to avoid API calls
 4. **Temperature 0.2** - Low temperature for consistent, deterministic outputs
@@ -126,15 +131,15 @@ tools - it cannot guess or calculate numbers on its own.
 
 ### Token-Safety Policy
 
-**CRITICAL**: LLM tests are NEVER run by default, even if OPENAI_API_KEY is set.
+**CRITICAL**: LLM tests are NEVER run by default, even if GOOGLE_API_KEY is set.
 This prevents accidental token burn in local development and CI.
 
 Two gates must be passed:
 1. `RUN_LLM_TESTS=1` environment variable (explicit opt-in)
-2. `OPENAI_API_KEY` must be set
+2. `GOOGLE_API_KEY` must be set
 
 Additional safeguards:
-- LLM tests skip (not fail) on rate limit (429)
+- LLM tests skip (not fail) on rate limit or throttling
 - LLM tests cannot run with pytest-xdist parallel execution
 - Prompts are minimal to reduce token usage
 
@@ -155,7 +160,7 @@ uv run pytest -q
 
 LLM tests require BOTH conditions:
 1. `RUN_LLM_TESTS=1` - Explicit opt-in flag
-2. `OPENAI_API_KEY` - API key set
+2. `GOOGLE_API_KEY` - API key set
 
 ```bash
 # Windows PowerShell:
@@ -168,7 +173,7 @@ set RUN_LLM_TESTS=1 && uv run pytest -m llm -v
 RUN_LLM_TESTS=1 uv run pytest -m llm -v
 ```
 
-Without `RUN_LLM_TESTS=1`, tests will skip even if OPENAI_API_KEY is present:
+Without `RUN_LLM_TESTS=1`, tests will skip even if GOOGLE_API_KEY is present:
 ```
 SKIPPED [1] tests/conftest.py: LLM tests require explicit opt-in: set RUN_LLM_TESTS=1
 ```
@@ -193,9 +198,9 @@ uv run pytest -m network -v  # No API key needed, just network access
 ```
 $ uv run python scripts/run_agent.py
 Loaded environment from c:\irrigation-copilot\irrigation-copilot\.env
-Model: gpt-4o-mini
+Model: gemini-2.5-flash
 Building agent...
-✅ Agent ready!
+[OK] Agent ready!
 
 ============================================================
 Irrigation Copilot Agent
@@ -207,9 +212,11 @@ Example: I have a 5 dunam tomato farm at lat 32.0, lon 34.8.
 
 You: I have a 5 dunam tomato farm at lat 32.0, lon 34.8. What do I need today?
 
-🤔 Thinking...
+[Thinking...]
 
-Agent: Your 5 dunam tomato farm needs approximately 3,200 liters/day today.
+Agent Answer:
+--------------------
+Your 5 dunam tomato farm needs approximately 3,200 liters/day today.
 This is based on 5.8mm evaporation from the nearest forecast station (Bet Dagan,
 12.5 km away) and mid-stage Kc coefficient of 1.15 for tomatoes.
 
@@ -218,6 +225,14 @@ water distribution.
 
 Verify with agronomist. Consider soil type, drainage, and irrigation system
 efficiency.
+--------------------
+
+Structured Result (JSON):
+{
+  "answer_text": "Your 5 dunam tomato farm needs approximately 3,200 liters/day today...",
+  "plan": { ... },
+  ...
+}
 ```
 
 ## Safety Notes
@@ -236,8 +251,8 @@ The correct imports for the Strands SDK:
 # Agent and tool decorator
 from strands import Agent, tool
 
-# OpenAI model
-from strands.models.openai import OpenAIModel
+# Gemini model
+from strands.models.gemini import GeminiModel
 
 # Built-in tools
 from strands_tools import calculator, current_time

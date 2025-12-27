@@ -1,7 +1,7 @@
 """
 Pytest configuration and fixtures for token-safe testing.
 
-CRITICAL: LLM tests are NEVER run by default, even if OPENAI_API_KEY exists.
+CRITICAL: LLM tests are NEVER run by default, even if GOOGLE_API_KEY exists.
 They require explicit opt-in via RUN_LLM_TESTS=1 environment variable.
 """
 
@@ -26,7 +26,7 @@ LLM_SKIP_REASON = (
     "LLM tests require explicit opt-in: set RUN_LLM_TESTS=1 to enable. "
     "This prevents accidental token burn."
 )
-RATE_LIMIT_SKIP_REASON = "OpenAI rate limit (429) hit - skipping to avoid token waste"
+RATE_LIMIT_SKIP_REASON = "Google Gemini rate limit hit - skipping to avoid token waste"
 XDIST_LLM_ERROR = (
     "LLM tests cannot run with pytest-xdist parallel execution. "
     "Run without -n flag to avoid parallel token burn."
@@ -39,8 +39,8 @@ def is_llm_enabled() -> bool:
 
 
 def has_api_key() -> bool:
-    """Check if OpenAI API key is available."""
-    return bool(os.environ.get("OPENAI_API_KEY", "").strip())
+    """Check if Google API key is available."""
+    return bool(os.environ.get("GOOGLE_API_KEY", "").strip())
 
 
 def is_xdist_worker() -> bool:
@@ -94,7 +94,7 @@ def pytest_collection_modifyitems(config, items):
             # Gate 2: Must have API key
             if not api_key_present:
                 item.add_marker(
-                    pytest.mark.skip(reason="OPENAI_API_KEY not set (required for LLM tests)")
+                    pytest.mark.skip(reason="GOOGLE_API_KEY not set (required for LLM tests)")
                 )
                 continue
 
@@ -127,7 +127,7 @@ def enforce_llm_safety(request):
         pytest.skip(LLM_SKIP_REASON)
 
     if not has_api_key():
-        pytest.skip("OPENAI_API_KEY not set")
+        pytest.skip("GOOGLE_API_KEY not set")
 
     if is_xdist_controller():
         pytest.skip(XDIST_LLM_ERROR)
@@ -150,7 +150,7 @@ def require_llm_opt_in():
     if not is_llm_enabled():
         pytest.skip(LLM_SKIP_REASON)
     if not has_api_key():
-        pytest.skip("OPENAI_API_KEY not set")
+        pytest.skip("GOOGLE_API_KEY not set")
     if is_xdist_controller():
         pytest.skip(XDIST_LLM_ERROR)
 

@@ -160,25 +160,31 @@ def compute_plan(
     if pulse_warning:
         warnings.append(pulse_warning)
 
-    # Build inputs_used dict
-    inputs_used: dict[str, float | str] = {
-        "kc": kc,
-        "efficiency": efficiency,
-        "area_m2": area_m2,
-        "evap_mm": forecast.evap_mm,
-    }
+    # Build inputs_used model
+    computation_inputs = models.ComputationInputs(
+        kc=kc,
+        efficiency=efficiency,
+        area_m2=area_m2,
+        evap_mm=forecast.evap_mm,
+    )
 
-    # Get coefficient source info
+    # Get coefficient source model
     if kc_source_info:
-        coefficient_source_info = kc_source_info.to_dict()
+        # Assuming kc_source_info has attributes that match CoefficientSource fields
+        # or we can use to_dict() if it still returns a compatible dict
+        source_dict = kc_source_info.to_dict()
+        coefficient_source = models.CoefficientSource(
+            source_type=source_dict.get("source_type", "unknown"),
+            source_title=source_dict.get("source_title", "Unknown"),
+            source_url=source_dict.get("source_url"),
+            table_reference=source_dict.get("table_reference"),
+        )
     else:
         # Fallback if source info unavailable
-        coefficient_source_info = {
-            "source_type": "unknown",
-            "source_title": "Unknown",
-            "source_url": "",
-            "table_reference": None,
-        }
+        coefficient_source = models.CoefficientSource(
+            source_type="unknown",
+            source_title="Unknown",
+        )
 
     # Build output
     if profile.mode == "farm":
@@ -190,9 +196,9 @@ def compute_plan(
             liters_per_dunam=liters_per_dunam,
             ml_per_day=None,
             pulses_per_day=pulses_per_day,
-            inputs_used=inputs_used,
+            inputs_used=computation_inputs,
             coefficient_value_used=kc,
-            coefficient_source=coefficient_source_info,
+            coefficient_source=coefficient_source,
             warnings=warnings,
         )
     else:  # plant mode
@@ -204,8 +210,8 @@ def compute_plan(
             liters_per_dunam=None,
             ml_per_day=ml_per_day,
             pulses_per_day=pulses_per_day,
-            inputs_used=inputs_used,
+            inputs_used=computation_inputs,
             coefficient_value_used=kc,
-            coefficient_source=coefficient_source_info,
+            coefficient_source=coefficient_source,
             warnings=warnings,
         )

@@ -8,7 +8,7 @@ import os
 from typing import Any
 
 from strands import Agent
-from strands.models.openai import OpenAIModel
+from strands.models.gemini import GeminiModel
 from strands_tools import calculator, current_time
 
 from app.agents import prompts
@@ -28,21 +28,27 @@ def build_agent() -> Agent:
         Configured agent instance with irrigation planning tools.
 
     Raises:
-        ValueError: If OPENAI_API_KEY is not set
+        ValueError: If GOOGLE_API_KEY is not set
     """
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError(
-            "OPENAI_API_KEY environment variable is required. "
-            "Create a .env file with OPENAI_API_KEY=your_key"
+            "GOOGLE_API_KEY environment variable is required. "
+            "Create a .env file with GOOGLE_API_KEY=your_key"
         )
 
-    # Get model from env or config (defaults to gpt-4o-mini)
+    # Get model from env or config (defaults to gemini-2.5-flash)
     model_id = os.environ.get("IRRIGATION_AGENT_MODEL", settings.irrigation_agent_model)
 
-    # Create OpenAI model
-    model = OpenAIModel(
+    # Create Gemini model
+    model = GeminiModel(
+        client_args={"api_key": api_key},
         model_id=model_id,
+        params={
+            "temperature": 0.2,
+            "max_output_tokens": 1024,
+            "top_p": 0.9,
+        },
     )
 
     # Build tools list - our custom irrigation tools

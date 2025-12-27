@@ -470,3 +470,59 @@
 
 - **Status:** Phase 5 complete. Strands agent MVP working with correct SDK imports.
 
+---
+
+## 2025-12-27
+
+### Phase 6: Google Gemini Migration
+
+- **Decision**: Switched from OpenAI to Google Gemini 2.5 Flash as the primary LLM provider.
+- **Rationale**:
+  - Gemini 2.5 Flash offers high speed and cost-efficiency.
+  - Native Strands provider support for Gemini.
+  - Strong tool-calling and structured output capabilities.
+
+- **Dependency Changes**:
+  - Updated `pyproject.toml` to replace `strands-agents` and `openai` with `strands-agents[gemini]`.
+  - Kept `strands-agents-tools` and `python-dotenv`.
+  - Successfully ran `uv sync` to update the environment.
+
+- **Environment & Config**:
+  - Updated `.env.example` to use `GOOGLE_API_KEY` and `gemini-2.5-flash`.
+  - Updated `app/utils/config.py` to support `irrigation_agent_provider` (defaulting to "gemini") and `IRRIGATION_AGENT_MODEL` (defaulting to `gemini-2.5-flash`).
+  - Added `RUN_LLM_TESTS` to config for explicit opt-in.
+
+- **Core Implementation Changes (app/agents/agent.py)**:
+  - Replaced `OpenAIModel` with `GeminiModel`.
+  - Configured `GeminiModel` with:
+    - `temperature: 0.2`
+    - `max_output_tokens: 1024`
+    - `top_p: 0.9`
+  - Kept same tools list (forecast, nearest point, compute irrigation).
+
+- **Performance & Stability Optimizations**:
+  - **Data Reduction**: Refactored `tool_get_forecast_points` to return a summary instead of 200+ points.
+  - **In-Code Distance Calculation**: Refactored `tool_pick_nearest_point` to calculate the nearest point in Python, sending only the relevant point to the LLM.
+  - **Strict Schemas**: Converted all nested dicts in `IrrigationPlan` to Pydantic models to fix Gemini's `additionalProperties` error.
+  - **CLI Robustness**: Added `EOFError` handling to `scripts/run_agent.py` to prevent infinite loops on empty input.
+
+- **CLI Runner Updates (scripts/run_agent.py)**:
+  - Switched to loading `GOOGLE_API_KEY`.
+  - Updated to use `Agent.structured_output(IrrigationAgentResult, prompt)` for stable Gemini output.
+  - Output now displays both the human-readable `answer_text` and the full structured JSON.
+
+- **Test Hardening (tests/conftest.py & tests/test_agent_llm.py)**:
+  - Updated LLM test gates to require `GOOGLE_API_KEY`.
+  - Updated rate limit handling to include Gemini-specific throttling messages.
+  - Added `test_agent_structured_output` to verify end-to-end Gemini structured result.
+
+- **Documentation**:
+  - Fully updated `ai_docs/specs/agents.md` with Gemini setup and usage instructions.
+  - Updated `ai_docs/01_STATUS.md` and `ai_docs/PROJECT_JOURNAL.md`.
+
+- **Verification**:
+  - `uv sync` completed successfully.
+  - `uv run ruff check .` passes.
+  - `uv run pytest -q` passes (offline tests).
+  - Manual run with `gemini-2.5-flash` confirmed working end-to-end.
+
