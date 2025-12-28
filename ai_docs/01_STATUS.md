@@ -3,7 +3,9 @@
 **Doc conventions:** This file reflects the current snapshot status only. For historical timeline and decisions, see `PROJECT_JOURNAL.md`.
 
 ## Current Phase
-Phase 7: API Layer - Complete
+**Complete / v1.0 Ready**
+
+The project is feature-complete for MVP release. All core functionality is implemented and tested.
 
 ## Phase 7: API Layer - Complete
 - Implemented production-quality FastAPI layer with two main endpoints:
@@ -91,8 +93,14 @@ Phase 7: API Layer - Complete
   - Documentation: ai_docs/specs/agents.md with setup, usage, cost tips
   - **Imports**: `from strands import Agent, tool`, `from strands.models.gemini import GeminiModel`
 
-## Next
-- Phase 7: API integration (FastAPI endpoints for agent)
+## Intentionally Out of Scope (v1.0)
+
+The following features are intentionally deferred to future phases:
+- **Multi-turn chat**: Agent is single-turn only (no conversation history)
+- **Vision/VLM**: Image analysis not implemented
+- **Frontend UI**: API-only, no web interface
+- **Israeli calendar-based coefficients**: Using FAO-56 stage-based only
+- **IMS adapter**: MoAG adapter only (IMS can be added later)
 
 ## Risks
 - MoAG API stability/availability

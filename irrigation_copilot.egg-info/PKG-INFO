@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: irrigation-copilot
-Version: 0.1.0
+Version: 1.0.0
 Summary: AI-native irrigation planning copilot
 Requires-Python: >=3.11
 Requires-Dist: fastapi>=0.104.0

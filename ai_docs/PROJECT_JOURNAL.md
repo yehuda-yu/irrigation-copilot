@@ -552,3 +552,52 @@
   - `uv run pytest -q` passes (offline tests).
   - Manual run with `gemini-2.5-flash` confirmed working end-to-end.
 
+---
+
+## 2025-12-27 (Evening)
+
+### Project Closing / v1.0 Release Preparation
+
+**Goal**: Professional "closing" of the repository for recruiter/demo purposes with minimal effort—polish, documentation, and lightweight packaging only. No new features.
+
+- **Demo Scenarios Documentation** (`ai_docs/specs/demo_scenarios.md`):
+  - Created 3 reliable demo scenarios: Farm mode (tomato), Plant mode (herbs), Error handling (offline cache miss)
+  - Each scenario includes PowerShell (`Invoke-RestMethod`) and curl commands
+  - Fixed coordinates (Tel Aviv area) for consistency
+  - Clear expected outputs documented
+
+- **README Rewrite**:
+  - Concise, recruiter-friendly structure
+  - "What it does" bullets
+  - "Architecture in 60 seconds" summary
+  - "Quickstart (3 commands)" for immediate demo
+  - Links to demo scenarios and API specs
+  - Cost & safety section (token-safe testing, rate limiting, Gemini quota)
+  - Honest limitations section (ET0 semantics, advisory tool, no multi-turn/VLM/frontend)
+  - Streamlined project structure (5-8 key paths)
+
+- **Demo Smoke Script** (`scripts/demo_smoke.py`):
+  - Lightweight script that calls `/irrigation/plan` endpoint
+  - Prints success message and key fields (date, evap_mm, liters/ml, chosen point)
+  - Exits non-zero on failure
+  - Dependency-free (uses requests, which is already in dependencies)
+
+- **Release Polish**:
+  - Created `CHANGELOG.md` with v1.0.0 entry listing all major features
+  - Updated `pyproject.toml` version from 0.1.0 to 1.0.0
+  - Updated `ai_docs/01_STATUS.md` to mark project as "Complete / v1.0 Ready"
+  - Added "Intentionally Out of Scope" section listing deferred features (multi-turn, VLM, frontend, Israeli coefficients, IMS adapter)
+
+- **Token-Safe Testing Verification**:
+  - Confirmed LLM tests require `RUN_LLM_TESTS=1` explicit opt-in
+  - Verified tests skip by default even if `GOOGLE_API_KEY` exists
+  - Documentation updated in README and demo scenarios
+
+- **Final Verification**:
+  - All offline tests pass
+  - No secrets committed (`.env` remains gitignored)
+  - Linting passes
+  - Ready for demo and recruiter review
+
+**Status**: Repository is professionally "closed" and ready for v1.0 release. All core functionality complete, well-documented, and demo-ready.
+

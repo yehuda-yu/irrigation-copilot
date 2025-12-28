@@ -9,6 +9,8 @@ irrigation_copilot.egg-info/top_level.txt
 tests/test_agent_factory.py
 tests/test_agent_llm.py
 tests/test_agent_tools.py
+tests/test_api_agent.py
+tests/test_api_irrigation_plan.py
 tests/test_cache.py
 tests/test_engine_basic.py
 tests/test_engine_units.py
