@@ -84,11 +84,6 @@ Interactive docs: `http://127.0.0.1:8000/docs` (when server is running)
 - `data/coefficients/` - FAO-56 crop coefficient files (JSON)
 - `tests/` - Test suite (offline by default, LLM tests opt-in)
 
-## Documentation
-
-- [`ai_docs/00_ARCHITECTURE.md`](ai_docs/00_ARCHITECTURE.md) - Architecture overview
-- [`ai_docs/01_STATUS.md`](ai_docs/01_STATUS.md) - Current status and phase
-- [`ai_docs/specs/`](ai_docs/specs/) - Feature specifications
 
 ## Development
 
