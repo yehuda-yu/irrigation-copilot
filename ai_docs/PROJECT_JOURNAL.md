@@ -474,7 +474,33 @@
 
 ## 2025-12-27
 
-### Phase 6: Google Gemini Migration
+### Phase 7: API Layer Implementation
+
+- **Architecture**:
+  - Implemented FastAPI application with modular routing in `app/api/routes/`.
+  - Created `app/api/schemas/` for request/response Pydantic models.
+  - Implemented a shared error handling utility in `app/api/errors.py`.
+- **Endpoints**:
+  - `POST /irrigation/plan`:
+    - Fully deterministic, uses the same logic as the engine.
+    - Resolves location to the nearest forecast point.
+    - Returns detailed diagnostics including distance and evaporation used.
+  - `POST /agent/run`:
+    - Single-turn agent execution using Strands and Gemini.
+    - Integrated guardrails: request size limits (via Pydantic), in-memory rate limiting, and structured output.
+    - Returns human-readable answers plus structured data.
+- **Security & Reliability**:
+  - Added API Key authentication (`X-API-Key` header) using a dependency.
+  - Added CORS middleware for broader integration.
+  - Centralized error mapping to ensure consistent JSON error responses across all endpoints.
+  - Custom exception handler in `app/api/main.py` to flatten error responses.
+- **Testing**:
+  - Created `tests/test_api_irrigation_plan.py` and `tests/test_api_agent.py`.
+  - Achieved high coverage for happy paths and error cases (validation, offline miss, rate limit).
+  - All API tests are offline by default; LLM tests require explicit activation.
+- **Quality Gates**:
+  - `uv run ruff check .` passes.
+  - `uv run pytest` passes (all 7 API tests + existing engine/agent tests).
 
 - **Decision**: Switched from OpenAI to Google Gemini 2.5 Flash as the primary LLM provider.
 - **Rationale**:

@@ -3,7 +3,24 @@
 **Doc conventions:** This file reflects the current snapshot status only. For historical timeline and decisions, see `PROJECT_JOURNAL.md`.
 
 ## Current Phase
-Phase 5: Strands Agent MVP - Complete
+Phase 7: API Layer - Complete
+
+## Phase 7: API Layer - Complete
+- Implemented production-quality FastAPI layer with two main endpoints:
+  - `POST /irrigation/plan`: Deterministic planning (no LLM, high performance).
+  - `POST /agent/run`: Single-turn AI agent orchestration with guardrails.
+- **API Features**:
+  - Consistent error response format: `{ "error": { "code": "...", "message": "...", "details": {...} } }`.
+  - Shared domain error mapping (400, 422, 503, 429).
+  - API Key authentication (via `X-API-Key` header, configurable via `API_AUTH_KEY`).
+  - CORS middleware for frontend/demo integration.
+  - In-memory rate limiting for the agent endpoint.
+  - Pydantic-based input validation and response schemas.
+  - Diagnostic outputs (chosen point, distance, evap_mm used) in all responses.
+- **Testing**:
+  - Comprehensive API tests using `FastAPI TestClient`.
+  - Offline tests with mocks for both deterministic and agent paths.
+  - Gated LLM integration tests (`RUN_LLM_TESTS=1`).
 
 ## Phase 6: Gemini Integration & Optimization - Complete
 - Switched Strands agent from OpenAI to Google Gemini 2.5 Flash

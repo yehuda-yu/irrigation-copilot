@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # API settings
     api_host: str = "0.0.0.0"
     api_port: int = 8000
+    api_auth_key: str | None = None
 
     # MoAG API settings
     moag_base_url: str = ""
